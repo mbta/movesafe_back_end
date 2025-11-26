@@ -15,6 +15,7 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       env: dev
+      lambda-function-name: dev-rdi-mbta-backend
       # the release name
       version-name: ${{ github.ref_name }}
     secrets: inherit
