@@ -8,6 +8,11 @@ on:
         required: true
         type: string
         description: AWS Lambda function name to deploy to
+      aws-region:
+        required: false
+        type: string
+        default: us-east-1
+        description: AWS region for deployment
       version-name:
         required: true
         type: string
@@ -32,7 +37,7 @@ jobs:
       # - uses: aws-actions/configure-aws-credentials@v5
       #   with:
       #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-      #     aws-region: us-east-1
+      #     aws-region: ${{ inputs.aws-region }}
 
       - uses: actions/checkout@v5
         with:
@@ -67,13 +72,16 @@ jobs:
       - name: Deploy to Lambda
         run: |
           aws lambda update-function-code \
+            --region ${{ inputs.aws-region }} \
             --function-name "${{ inputs.lambda-function-name }}" \
             --zip-file "fileb://${{ steps.package.outputs.package-path }}"
 
       - name: Get function info
         id: lambda-info
         run: |
-          FUNCTION_INFO=$(aws lambda get-function --function-name "${{ inputs.lambda-function-name }}")
+          FUNCTION_INFO=$(aws lambda get-function \
+            --region ${{ inputs.aws-region }} \
+            --function-name "${{ inputs.lambda-function-name }}")
           VERSION=$(echo "$FUNCTION_INFO" | jq -r '.Configuration.Version')
           LAST_MODIFIED=$(echo "$FUNCTION_INFO" | jq -r '.Configuration.LastModified')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
