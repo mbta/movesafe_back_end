@@ -1,0 +1,13 @@
+# The MBTA Radix team is the default owner for the entire codebase.
+
+-       @mbta/radix
+
+## Dependency manifests & CI tooling does not automatically add reviewers
+
+package.json
+yarn.lock
+.tool-versions
+Makefile
+tsconfig.json
+jest.config.js
+serverless.yml
