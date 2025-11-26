@@ -29,10 +29,10 @@ jobs:
     environment: ${{ inputs.env }}
 
     steps:
-      - uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+      # - uses: aws-actions/configure-aws-credentials@v5
+      #   with:
+      #     role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+      #     aws-region: us-east-1
 
       - uses: actions/checkout@v5
         with:
@@ -79,13 +79,13 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "last-modified=$LAST_MODIFIED" >> $GITHUB_OUTPUT
 
-      - uses: mbta/actions/notify-slack-deploy@v2
-        if: ${{ !cancelled() }}
-        with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
-          job-status: ${{ job.status }}
-          custom-message: |
-            Deployed MoveSafe Backend to Lambda (${{ inputs.env }})
-            📦 Package: ${{ steps.package.outputs.package-size }}
-            🔖 Version: ${{ steps.lambda-info.outputs.version }}
-            ⏰ Deployed: ${{ steps.lambda-info.outputs.last-modified }}
+      # - uses: mbta/actions/notify-slack-deploy@v2
+      #   if: ${{ !cancelled() }}
+      #   with:
+      #     webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+      #     job-status: ${{ job.status }}
+      #     custom-message: |
+      #       Deployed MoveSafe Backend to Lambda (${{ inputs.env }})
+      #       📦 Package: ${{ steps.package.outputs.package-size }}
+      #       🔖 Version: ${{ steps.lambda-info.outputs.version }}
+      #       ⏰ Deployed: ${{ steps.lambda-info.outputs.last-modified }}
