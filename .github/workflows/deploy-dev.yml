@@ -3,7 +3,9 @@ name: Deploy to Development
 on:
   workflow_dispatch:
   push:
-    branches: [main, feat/migration_ci_cd] # Temporarily added for testing
+    branches:
+      - main
+      - feat/migration_ci_cd # FOR TESTING PURPOSES ONLY
 
 concurrency:
   group: dev

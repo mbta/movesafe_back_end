@@ -6,7 +6,7 @@ on:
       - released
 
 concurrency:
-  group: prod
+  group: back-prod
   cancel-in-progress: true
 
 jobs:

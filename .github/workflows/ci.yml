@@ -32,7 +32,7 @@ jobs:
           echo "node-modules-restore=cache-node-modules-" >> $GITHUB_OUTPUT
           echo "node-modules=cache-node-modules-${{ hashFiles('yarn.lock', '.tool-versions') }}" >> $GITHUB_OUTPUT
 
-      - name: asdf cache
+      - name: Cache ASDF
         uses: actions/cache@v4
         with:
           path: ~/.asdf
@@ -43,7 +43,7 @@ jobs:
       - uses: asdf-vm/actions/install@v4
         if: steps.asdf-cache.outputs.cache-hit != 'true'
 
-      - name: Setup asdf environment
+      - name: Setup ASDF environment
         uses: mbta/actions/reshim-asdf@v2
 
       - name: Enable corepack
@@ -73,7 +73,7 @@ jobs:
 
       - uses: asdf-vm/actions/install@v4
 
-      - name: Setup asdf environment
+      - name: Setup ASDF environment
         uses: mbta/actions/reshim-asdf@v2
 
       - name: Enable corepack
@@ -89,7 +89,7 @@ jobs:
           restore-keys: ${{ needs.setup.outputs.cache-key-node-modules }}
           fail-on-cache-miss: true
 
-      - name: Run linter
+      - name: Run lint
         continue-on-error: true # Temporarily allow linting to fail while code quality is improved
         run: corepack yarn lint
 
@@ -133,7 +133,7 @@ jobs:
 
       - uses: asdf-vm/actions/install@v4
 
-      - name: Setup asdf environment
+      - name: Setup ASDF environment
         uses: mbta/actions/reshim-asdf@v2
 
       - name: Enable corepack
@@ -166,10 +166,10 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Check all jobs
+      - name: Assert results
         run: |
           if [[ "${{ needs.lint.result }}" != "success" ]]; then
-            echo "Lint job failed"
+            echo "Lint failed"
             exit 1
           fi
           if [[ "${{ needs.test.result }}" != "success" ]]; then
@@ -177,7 +177,7 @@ jobs:
             exit 1
           fi
           if [[ "${{ needs.build.result }}" != "success" ]]; then
-            echo "Build job failed"
+            echo "Build failed"
             exit 1
           fi
           echo "All checks passed!"
