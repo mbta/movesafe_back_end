@@ -1,106 +1,128 @@
-import { Model, Column, CreatedAt, PrimaryKey, Table, UpdatedAt, ForeignKey, BelongsTo, HasMany, Default, DataType, AllowNull, BelongsToMany } from "sequelize-typescript";
+import {
+  AllowNull,
+  BelongsTo,
+  BelongsToMany,
+  Column,
+  CreatedAt,
+  DataType,
+  Default,
+  ForeignKey,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from "sequelize-typescript";
 
-import MoveReason from "./MoveReason";
-import Yard from "./Yard";
-import User from "./User";
+import AuditLog from "./AuditLog";
 import Inspection from "./Inspection";
 import MoveCar from "./MoveCar";
-import Signature from "./Signature";
-import AuditLog from "./AuditLog";
-import Tag from "./Tag";
+import MoveReason from "./MoveReason";
 import MoveTagAssociation from "./MoveTagAssociation";
+import Signature from "./Signature";
+import Tag from "./Tag";
+import User from "./User";
+import Yard from "./Yard";
 
 @Table({
-    timestamps: true,
-    tableName: "Moves",
-    modelName: "Move",
+  timestamps: true,
+  tableName: "Moves",
+  modelName: "Move",
 })
 class Moves extends Model {
-    @PrimaryKey
-    @Default(DataType.UUIDV4)
-    @Column(DataType.UUID)
-    declare id: string;
+  @PrimaryKey
+  @Default(DataType.UUIDV4)
+  @Column(DataType.UUID)
+  declare id: string;
 
-    @ForeignKey(() => Yard)
-    @Column
-    declare yard_id: string;
+  @ForeignKey(() => Yard)
+  @Column
+  declare yard_id: string;
 
-    @ForeignKey(() => MoveReason)
-    @Column
-    declare move_reason_id: string;
+  @ForeignKey(() => MoveReason)
+  @Column
+  declare move_reason_id: string;
 
-    @ForeignKey(() => User)
-    @AllowNull
-    @Column({ type: DataType.STRING })
-    declare move_done_by_user_id?: string | null;
+  @ForeignKey(() => User)
+  @AllowNull
+  @Column({ type: DataType.STRING })
+  declare move_done_by_user_id?: string | null;
 
-    @ForeignKey(() => User)
-    @AllowNull
-    @Column({ type: DataType.STRING })
-    declare inspections_done_by_user_id?: string | null;
+  @ForeignKey(() => User)
+  @AllowNull
+  @Column({ type: DataType.STRING })
+  declare inspections_done_by_user_id?: string | null;
 
-    @ForeignKey(() => User)
-    @AllowNull
-    @Column({ type: DataType.STRING })
-    declare guardside_inspection_done_by_user_id?: string | null;
+  @ForeignKey(() => User)
+  @AllowNull
+  @Column({ type: DataType.STRING })
+  declare guardside_inspection_done_by_user_id?: string | null;
 
-    @ForeignKey(() => User)
-    @Column
-    declare yardmaster_user_id: string;
+  @ForeignKey(() => User)
+  @AllowNull
+  @Column({ type: DataType.STRING })
+  declare inspections_selected_by_user_id?: string | null;
 
-    @Column
-    declare due_date: Date;
+  @ForeignKey(() => User)
+  @Column
+  declare yardmaster_user_id: string;
 
-    @Column
-    declare status: string;
+  @Column
+  declare due_date: Date;
 
-    @Column
-    declare priority_order: number;
+  @Column
+  declare status: string;
 
-    @Column
-    declare move_from: string;
+  @Column
+  declare priority_order: number;
 
-    @Column
-    declare move_to: string;
+  @Column
+  declare move_from: string;
 
-    @CreatedAt
-    declare created_at: Date;
+  @Column
+  declare move_to: string;
 
-    @UpdatedAt
-    declare last_update: Date;
+  @CreatedAt
+  declare created_at: Date;
 
-    @BelongsTo(() => Yard)
-    declare yard: Yard;
+  @UpdatedAt
+  declare last_update: Date;
 
-    @BelongsTo(() => MoveReason)
-    declare move_reason: MoveReason;
+  @BelongsTo(() => Yard)
+  declare yard: Yard;
 
-    @BelongsTo(() => User, 'move_done_by_user_id')
-    declare move_done_by_user: User;
+  @BelongsTo(() => MoveReason)
+  declare move_reason: MoveReason;
 
-    @BelongsTo(() => User, 'inspections_done_by_user_id')
-    declare inspections_done_by_user: User;
+  @BelongsTo(() => User, "move_done_by_user_id")
+  declare move_done_by_user: User;
 
-    @BelongsTo(() => User, 'guardside_inspection_done_by_user_id')
-    declare guardside_inspection_done_by_user: User;
+  @BelongsTo(() => User, "inspections_done_by_user_id")
+  declare inspections_done_by_user: User;
 
-    @BelongsTo(() => User, 'yardmaster_user_id')
-    declare yardmaster_user: User;
+  @BelongsTo(() => User, "inspections_selected_by_user_id")
+  declare inspections_selected_by_user: User;
 
-    @HasMany(() => Inspection)
-    declare inspections: Inspection[];
+  @BelongsTo(() => User, "guardside_inspection_done_by_user_id")
+  declare guardside_inspection_done_by_user: User;
 
-    @HasMany(() => MoveCar)
-    declare move_cars: MoveCar[];
+  @BelongsTo(() => User, "yardmaster_user_id")
+  declare yardmaster_user: User;
 
-    @HasMany(() => Signature)
-    declare signatures: Signature[];
+  @HasMany(() => Inspection)
+  declare inspections: Inspection[];
 
-    @HasMany(() => AuditLog)
-    declare audit_logs: AuditLog[];
+  @HasMany(() => MoveCar)
+  declare move_cars: MoveCar[];
 
-    @BelongsToMany(() => Tag, () => MoveTagAssociation)
-    declare tags: Tag[];
+  @HasMany(() => Signature)
+  declare signatures: Signature[];
+
+  @HasMany(() => AuditLog)
+  declare audit_logs: AuditLog[];
+
+  @BelongsToMany(() => Tag, () => MoveTagAssociation)
+  declare tags: Tag[];
 }
 
 export default Moves;

@@ -16,9 +16,14 @@ import {
 } from "../dto/moveDetailsDTO.model";
 import { AuditLogActions } from "../enum/audit_log_actions.enum";
 import { MoveStatus } from "../enum/move-status.enum";
+import { MoveReasons } from "../enum/moveReasons";
 import { QuestionTypes } from "../enum/questionTypes.enum";
 import { RailOptions } from "../enum/railOptions.enum";
-import { YardMasterRoles, YardMotorPersonRoles } from "../enum/userRoles.enum";
+import {
+  UserRoles,
+  YardMasterRoles,
+  YardMotorPersonRoles,
+} from "../enum/userRoles.enum";
 import {
   AuditLog,
   Car,
@@ -37,8 +42,30 @@ import {
   User,
   Yard,
 } from "../models";
-
 import { getDayUTCRange } from "../utils/dateUtils";
+
+interface MoveCarInput {
+  first_car_id: string;
+  second_car_id?: string | null;
+  pair_order: number;
+}
+
+interface CreateMoveAttributes {
+  yard_id: string;
+  move_reason_id: string;
+  guardside_inspection_done_by_user_id?: string | null;
+  due_date: string | Date;
+  status: MoveStatus;
+  priority_order: number;
+  move_from: string;
+  move_to: string;
+  move_cars: MoveCarInput[];
+  inspections: Partial<Inspection>[];
+  inspections_selected_by_user_id?: string | null;
+  yardmaster_user_id?: string;
+  inspections_done_by_user_id?: string | null;
+  move_done_by_user_id?: string | null;
+}
 
 export const create = async (req: Request, res: Response) => {
   const transaction: Transaction = await sequelizeConnection.transaction();
@@ -56,22 +83,22 @@ export const create = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const isYardMasterUser: boolean = !!userGroups.find((g: any) =>
-      YardMasterRoles.includes(g)
+    const isYardMasterUser: boolean = !!userGroups.find((g: string) =>
+      YardMasterRoles.includes(g as UserRoles)
     );
-    const isYardMotorPersonUser: boolean = !!userGroups.find((g: any) =>
-      YardMotorPersonRoles.includes(g)
+    const isYardMotorPersonUser: boolean = !!userGroups.find((g: string) =>
+      YardMotorPersonRoles.includes(g as UserRoles)
     );
 
     const createMoveRequests = req.body;
-    let moves: Move[] = [];
+    const moves: Move[] = [];
 
     if (!Array.isArray(createMoveRequests))
       return res
         .status(400)
         .json({ message: "Data is not in the right format" });
 
-    for (let createMoveRequest of createMoveRequests) {
+    for (const createMoveRequest of createMoveRequests) {
       const {
         yard_id,
         move_reason_id,
@@ -83,6 +110,7 @@ export const create = async (req: Request, res: Response) => {
         move_to,
         move_cars,
         tag_ids,
+        yardMotorperson_user_id,
       } = createMoveRequest;
 
       if (
@@ -138,7 +166,7 @@ export const create = async (req: Request, res: Response) => {
           return { inspection_form_id: form.id };
         });
 
-      let tags: Tag[] = await Tag.findAll({
+      const tags: Tag[] = await Tag.findAll({
         where: {
           id: { [Op.in]: tag_ids },
         },
@@ -176,7 +204,7 @@ export const create = async (req: Request, res: Response) => {
         ? MoveStatus.waiting
         : MoveStatus.pending_move;
 
-      let createMoveObject: any = {
+      const createMoveObject: CreateMoveAttributes = {
         yard_id,
         move_reason_id,
         guardside_inspection_done_by_user_id,
@@ -187,6 +215,7 @@ export const create = async (req: Request, res: Response) => {
         move_to,
         move_cars,
         inspections: moveInspections,
+        inspections_selected_by_user_id: yardMotorperson_user_id,
       };
 
       if (isYardMasterUser) {
@@ -200,7 +229,8 @@ export const create = async (req: Request, res: Response) => {
         createMoveObject.move_done_by_user_id = user.id;
       }
 
-      const move: Move = await Move.create(createMoveObject, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const move: Move = await Move.create(createMoveObject as any, {
         include: [MoveCar, Inspection, Tag],
         transaction: transaction,
       });
@@ -220,7 +250,10 @@ export const create = async (req: Request, res: Response) => {
         {
           user_id: user.id,
           move_id: move.id,
-          action: AuditLogActions.created_move,
+          action:
+            move_reason_id == MoveReasons.inspection
+              ? AuditLogActions.created_inspection
+              : AuditLogActions.created_move,
         },
         { transaction: transaction }
       );
@@ -231,7 +264,6 @@ export const create = async (req: Request, res: Response) => {
     await transaction.commit();
     return res.json(moves);
   } catch (err) {
-    console.log(err);
     await transaction.rollback();
     return res
       .status(500)
@@ -357,21 +389,22 @@ const returnAllByDateWhere = (req: Request): WhereOptions => {
 };
 
 const returnAllByDateIncludes = (req: Request): Includeable[] => {
-  let {
+  const {
     rail_type,
     yard_id,
     line_id,
     reason_id,
     yardmaster_user_id,
     employee_user_id,
-    tag_ids,
   } = req.query;
+
+  let { tag_ids } = req.query;
 
   if (tag_ids && typeof tag_ids === "string") {
     tag_ids = tag_ids.split(",");
   }
 
-  let includes: Includeable[] = [
+  const includes: Includeable[] = [
     {
       model: MoveCar,
       include: [
@@ -673,6 +706,7 @@ export const getAllUnassigned = async (req: Request, res: Response) => {
           status: MoveStatus.waiting,
           inspections_done_by_user_id: { [Op.or]: [user.id, null] },
           yard_id: yard_id,
+          inspections_selected_by_user_id: { [Op.or]: [user.id, null] },
         },
         include: [
           {
@@ -696,6 +730,11 @@ export const getAllUnassigned = async (req: Request, res: Response) => {
             model: User,
             attributes: ["name", "badge_number"],
             as: "inspections_done_by_user",
+          },
+          {
+            model: User,
+            attributes: ["name", "badge_number"],
+            as: "inspections_selected_by_user",
           },
           {
             model: Inspection,
@@ -793,6 +832,7 @@ export const getAllPendingMove = async (req: Request, res: Response) => {
           status: MoveStatus.pending_move,
           move_done_by_user_id: { [Op.or]: [user.id, null] },
           yard_id: yard_id,
+          inspections_selected_by_user_id: { [Op.or]: [user.id, null] },
         },
         include: [
           {
@@ -824,6 +864,11 @@ export const getAllPendingMove = async (req: Request, res: Response) => {
           {
             model: Yard,
             attributes: ["name"],
+          },
+          {
+            model: User,
+            attributes: ["name", "badge_number"],
+            as: "inspections_selected_by_user",
           },
           {
             model: Tag,
@@ -916,6 +961,7 @@ export const getMoveHistory = async (req: Request, res: Response) => {
             { inspections_done_by_user_id: user.id },
             { guardside_inspection_done_by_user_id: user.id },
             { move_done_by_user_id: user.id },
+            { inspections_selected_by_user_id: { [Op.or]: [user.id, null] } },
           ],
         },
         include: [
@@ -935,6 +981,11 @@ export const getMoveHistory = async (req: Request, res: Response) => {
             ],
             attributes: ["pair_order"],
             separate: true,
+          },
+          {
+            model: User,
+            attributes: ["name", "badge_number"],
+            as: "inspections_selected_by_user",
           },
           {
             model: MoveReason,
@@ -1341,6 +1392,109 @@ export const assign = async (req: Request, res: Response) => {
   }
 };
 
+export const getAssignedMove = async (req: Request, res: Response) => {
+  try {
+    const { key_cloak_user_id } = req.headers;
+
+    const user: User | null = await User.findOne({
+      where: {
+        key_cloak_id: key_cloak_user_id,
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const move: Move | null = await Move.findOne({
+      where: {
+        inspections_done_by_user_id: user.id,
+        status: {
+          [Op.in]: [MoveStatus.pending_checklist, MoveStatus.pending_move],
+        },
+      },
+      include: [
+        {
+          model: MoveCar,
+          include: [
+            {
+              model: Car,
+              as: "first_car",
+              attributes: ["id", "series_number"],
+            },
+            {
+              model: Car,
+              as: "second_car",
+              attributes: ["id", "series_number"],
+            },
+          ],
+          attributes: ["pair_order"],
+          separate: true,
+        },
+        {
+          model: Inspection,
+          include: [
+            {
+              model: InspectionForm,
+              attributes: [
+                "id",
+                "name",
+                "short_name",
+                "description",
+                "has_guardside_signature",
+                "has_foreperson_signature",
+              ],
+            },
+          ],
+          attributes: ["id"],
+          separate: true,
+        },
+        {
+          model: MoveReason,
+          attributes: ["name"],
+        },
+        {
+          model: Yard,
+          attributes: ["name"],
+        },
+        {
+          model: User,
+          as: "inspections_done_by_user",
+          attributes: ["name", "badge_number"],
+        },
+        {
+          model: Tag,
+          attributes: ["name"],
+        },
+      ],
+      attributes: [
+        "id",
+        "due_date",
+        "priority_order",
+        "move_from",
+        "move_to",
+        "status",
+        "last_update",
+        [
+          Sequelize.literal("CONVERT_TZ(Move.created_at, '+00:00', '-01:00')"),
+          "created_at",
+        ],
+      ],
+      order: [["last_update", "DESC"]],
+    });
+
+    if (!move) {
+      return res.status(404).json({ message: "No assigned move found" });
+    }
+
+    return res.json(move);
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: err });
+  }
+};
+
 export const release = async (req: Request, res: Response) => {
   const transaction: Transaction = await sequelizeConnection.transaction();
   try {
@@ -1606,7 +1760,7 @@ export const saveResult = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Move can not be updated" });
     }
 
-    let inspection_answers: InspectionAnswer[] = answers;
+    const inspection_answers: InspectionAnswer[] = answers;
 
     await Promise.all(
       inspection_answers.map(async (answer: InspectionAnswer) => {
@@ -1658,7 +1812,6 @@ export const saveResult = async (req: Request, res: Response) => {
     transaction.commit();
     return res.json(updated_move);
   } catch (err) {
-    console.log(err);
     await transaction.rollback();
     return res
       .status(500)
@@ -1676,7 +1829,7 @@ export const getMoveDetails = async (req: Request, res: Response) => {
       });
     }
 
-    var move: Move | null = await returnMoveAndAllChildren(move_id);
+    const move: Move | null = await returnMoveAndAllChildren(move_id);
 
     if (!move) {
       return res
@@ -1688,7 +1841,6 @@ export const getMoveDetails = async (req: Request, res: Response) => {
       (inspection: Inspection) => inspection.id
     );
 
-    //did not query answers with move because of sequelize's nested querying limitations
     const inspection_answers: InspectionAnswer[] =
       await InspectionAnswer.findAll({
         where: {
@@ -1713,7 +1865,6 @@ export const getMoveDetails = async (req: Request, res: Response) => {
       returnMoveDetailsWithInspectionsAnswers(move, inspection_answers);
     return res.status(200).json(moveDetailsWithInspectionsAnswers);
   } catch (err) {
-    console.log(err);
     return res
       .status(500)
       .json({ message: "internal server error", error: err });
@@ -1844,7 +1995,7 @@ const returnMoveDetailsWithInspectionsAnswers = (
   move: Move,
   inspection_answers: InspectionAnswer[]
 ): IMoveDetailsDTO => {
-  let moveDetails: IMoveDetailsDTO = move.toJSON();
+  const moveDetails: IMoveDetailsDTO = move.toJSON();
 
   moveDetails.inspections?.forEach((inspection: IMoveDetailsInspection) => {
     inspection.inspection_form.inspection_form_sections?.forEach(
@@ -1888,7 +2039,7 @@ const returnMoveDetailQuestionAnswer = (
         .filter((answer: InspectionAnswer) => answer.has_major_defect)
         .map((answer: InspectionAnswer) => answer.car.series_number);
 
-    case QuestionTypes.DoubleDefectQuestion:
+    case QuestionTypes.DoubleDefectQuestion: {
       const majorDefects = answers
         .filter((answer: InspectionAnswer) => answer.has_major_defect)
         .map((answer: InspectionAnswer) => answer.car.series_number);
@@ -1896,8 +2047,9 @@ const returnMoveDetailQuestionAnswer = (
         .filter((answer: InspectionAnswer) => answer.has_minor_defect)
         .map((answer: InspectionAnswer) => answer.car.series_number);
       return { minorDefects, majorDefects };
+    }
 
-    case QuestionTypes.GuardSideAndMotorPersonQuestion:
+    case QuestionTypes.GuardSideAndMotorPersonQuestion: {
       const guardSdeAnswers = answers
         .filter(
           (answer: InspectionAnswer) =>
@@ -1914,6 +2066,7 @@ const returnMoveDetailQuestionAnswer = (
         guardSide: guardSdeAnswers,
         motorPersonSide: motorPersonAnswers,
       };
+    }
 
     case QuestionTypes.YesOrNoQuestion:
       return answers[0]?.has_major_defect ?? false;

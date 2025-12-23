@@ -8,3 +8,5 @@ jspm_packages
 dist
 .env
 *.zip
+
+.vscode/

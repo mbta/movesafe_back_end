@@ -115,13 +115,15 @@ CREATE TABLE mbtadb.Moves(
     move_to varchar(100) NOT NULL,
     last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    inspections_selected_by_user_id CHAR(36),
     PRIMARY KEY (id),
     FOREIGN KEY (yard_id) REFERENCES mbtadb.Yards(id),
     FOREIGN KEY (move_reason_id) REFERENCES mbtadb.Move_Reasons(id),
     FOREIGN KEY (move_done_by_user_id) REFERENCES mbtadb.Users(id),
     FOREIGN KEY (inspections_done_by_user_id) REFERENCES mbtadb.Users(id),
     FOREIGN KEY (guardside_inspection_done_by_user_id) REFERENCES mbtadb.Users(id),
-    FOREIGN KEY (yardmaster_user_id) REFERENCES mbtadb.Users(id)
+    FOREIGN KEY (yardmaster_user_id) REFERENCES mbtadb.Users(id),
+    FOREIGN KEY (inspections_selected_by_user_id) REFERENCES mbtadb.Users(id)
 );
 
 CREATE TABLE mbtadb.Move_Cars(
