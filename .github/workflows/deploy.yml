@@ -68,12 +68,7 @@ jobs:
       - name: Create deployment package
         id: package
         run: |
-          BUILD_DIR=build
-          rm -rf "$BUILD_DIR"
-          mkdir -p "$BUILD_DIR"
-          cp -r dist "$BUILD_DIR/dist"
-          cp -r node_modules "$BUILD_DIR/node_modules"
-          zip -r lambda_output.zip "$BUILD_DIR"
+          zip -r lambda_output.zip dist node_modules
           echo "package-path=lambda_output.zip" >> $GITHUB_OUTPUT
           echo "package-size=$(du -h lambda_output.zip | cut -f1)" >> $GITHUB_OUTPUT
 
