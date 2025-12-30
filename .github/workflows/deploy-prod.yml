@@ -18,7 +18,7 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       env: prod
-      lambda-function-name: prod-rdi-mbta-backend
+      lambda-function-name: prd-rdi-mbta-backend
       # the release name
       version-name: ${{ github.ref_name }}
     secrets: inherit
