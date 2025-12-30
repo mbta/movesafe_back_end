@@ -5,10 +5,9 @@ on:
   push:
     branches:
       - main
-      - feat/migration_ci_cd # FOR TESTING PURPOSES ONLY
 
 concurrency:
-  group: dev
+  group: back-dev
   cancel-in-progress: true
 
 jobs:

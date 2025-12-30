@@ -1,6 +1,9 @@
 name: Deploy to Production
 
 on:
+  push:
+    branches:
+      - feat/migration_ci_cd # FOR TESTING PURPOSES ONLY
   release:
     types:
       - released
