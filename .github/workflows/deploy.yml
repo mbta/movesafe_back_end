@@ -77,7 +77,8 @@ jobs:
           aws lambda update-function-code \
             --region ${{ inputs.aws-region }} \
             --function-name "${{ inputs.lambda-function-name }}" \
-            --zip-file "fileb://${{ steps.package.outputs.package-path }}"
+            --zip-file "fileb://${{ steps.package.outputs.package-path }}" \
+          | jq 'del(.Environment)'
 
       - name: Get function info
         id: lambda-info
