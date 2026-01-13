@@ -1,0 +1,24 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - feat/migration_ci_cd # FOR TESTING PURPOSES ONLY
+  release:
+    types:
+      - released
+
+concurrency:
+  group: back-prod
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    uses: ./.github/workflows/deploy.yml
+    with:
+      env: prod
+      lambda-function-name: prd-rdi-mbta-backend
+      # the release name
+      version-name: ${{ github.ref_name }}
+    secrets: inherit
