@@ -1,0 +1,14 @@
+service: mbta-backend
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-2
+  apiGateway:
+    binaryMediaTypes:
+      - "*/*"
+functions:
+  app:
+    handler: dist/server.handler
+    events:
+      - http: ANY /
+      - http: ANY /{proxy+}

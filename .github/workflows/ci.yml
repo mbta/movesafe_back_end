@@ -1,0 +1,181 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  merge_group:
+
+jobs:
+  setup:
+    name: Setup Node.js and dependencies
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key-asdf: ${{ steps.cache-keys.outputs.asdf }}
+      cache-key-node-modules: ${{ steps.cache-keys.outputs.node-modules }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set cache keys
+        id: cache-keys
+        run: |
+          echo "asdf-restore=cache-asdf-" >> $GITHUB_OUTPUT
+          echo "asdf=cache-asdf-${{ hashFiles('.tool-versions') }}" >> $GITHUB_OUTPUT
+          echo "node-modules-restore=cache-node-modules-" >> $GITHUB_OUTPUT
+          echo "node-modules=cache-node-modules-${{ hashFiles('yarn.lock', '.tool-versions') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache ASDF
+        uses: actions/cache@v4
+        with:
+          path: ~/.asdf
+          key: ${{ steps.cache-keys.outputs.asdf }}
+          restore-keys: ${{ steps.cache-keys.outputs.asdf-restore }}
+        id: asdf-cache
+
+      - uses: asdf-vm/actions/install@v4
+        if: steps.asdf-cache.outputs.cache-hit != 'true'
+
+      - name: Setup ASDF environment
+        uses: mbta/actions/reshim-asdf@v2
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Node modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            .yarn/cache
+          key: ${{ steps.cache-keys.outputs.node-modules }}
+          restore-keys: ${{ steps.cache-keys.outputs.node-modules-restore }}
+        id: node-modules-cache
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: corepack yarn install --immutable
+
+  lint:
+    name: Lint
+    needs: setup
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: asdf-vm/actions/install@v4
+
+      - name: Setup ASDF environment
+        uses: mbta/actions/reshim-asdf@v2
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Restore Node modules cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            .yarn/cache
+          key: ${{ needs.setup.outputs.cache-key-node-modules }}
+          restore-keys: ${{ needs.setup.outputs.cache-key-node-modules }}
+          fail-on-cache-miss: true
+
+      - name: Run lint
+        run: corepack yarn lint
+
+  test:
+    name: Test
+    needs: setup
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: asdf-vm/actions/install@v4
+
+      - name: Setup asdf environment
+        uses: mbta/actions/reshim-asdf@v2
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Restore Node modules cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            .yarn/cache
+          key: ${{ needs.setup.outputs.cache-key-node-modules }}
+          restore-keys: ${{ needs.setup.outputs.cache-key-node-modules }}
+          fail-on-cache-miss: true
+
+      - name: Run tests
+        run: corepack yarn test
+
+  build:
+    name: Build
+    needs: setup
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: asdf-vm/actions/install@v4
+
+      - name: Setup ASDF environment
+        uses: mbta/actions/reshim-asdf@v2
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Restore Node modules cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            .yarn/cache
+          key: ${{ needs.setup.outputs.cache-key-node-modules }}
+          restore-keys: ${{ needs.setup.outputs.cache-key-node-modules }}
+          fail-on-cache-miss: true
+
+      - name: Build project
+        run: corepack yarn build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
+          retention-days: 7
+
+  # All checks must pass for the workflow to be considered successful
+  all-checks:
+    name: All Checks
+    needs: [lint, test, build]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Assert results
+        run: |
+          if [[ "${{ needs.lint.result }}" != "success" ]]; then
+            echo "Lint failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "Test job failed"
+            exit 1
+          fi
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "Build failed"
+            exit 1
+          fi
+          echo "All checks passed!"
