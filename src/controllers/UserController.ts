@@ -5,7 +5,7 @@ import {
 import axios, { AxiosResponse } from "axios";
 import { Request, Response } from "express";
 import qs from "qs";
-import { Line, User } from "../models";
+import { Line, User } from "../models/index.js";
 
 interface ICreateUser {
   username: string;
@@ -69,6 +69,29 @@ const getKeyCloakAuthToken = async (): Promise<string> => {
   return token;
 };
 
+const getUserRoleAndLine = (
+  groups: string[]
+): { role: string; line: string } => {
+  const usersGroupSplit: string[] = groups[0]?.split(" ");
+
+  if (!usersGroupSplit?.length) {
+    throw new Error("Could not determine users group");
+  }
+
+  const { usersRole, usersLine } =
+    usersGroupSplit.length > 3
+      ? {
+          usersRole: usersGroupSplit[0] + " " + usersGroupSplit[1],
+          usersLine: usersGroupSplit[2] + " " + usersGroupSplit[3],
+        }
+      : {
+          usersRole: usersGroupSplit[0],
+          usersLine: usersGroupSplit[1] + " " + usersGroupSplit[2],
+        };
+
+  return { role: usersRole, line: usersLine };
+};
+
 export const create = async (req: Request, res: Response) => {
   try {
     const user: ICreateUser = req.body;
@@ -111,23 +134,9 @@ export const create = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Failed to create user" });
     }
 
-    const usersGroupSplit: string[] = user.groups[0]?.split(" ");
-    let usersLine: string = "";
-    let usersRole: string = "";
-
-    if (!usersGroupSplit?.length) {
-      return res
-        .status(400)
-        .json({ message: "Could not determine users group" });
-    }
-
-    if (usersGroupSplit.length > 3) {
-      usersRole = usersGroupSplit[0] + " " + usersGroupSplit[1];
-      usersLine = usersGroupSplit[2] + " " + usersGroupSplit[3];
-    } else {
-      usersRole = usersGroupSplit[0];
-      usersLine = usersGroupSplit[1] + " " + usersGroupSplit[2];
-    }
+    const { role: usersRole, line: usersLine } = getUserRoleAndLine(
+      user.groups
+    );
 
     const databaseUser = await User.create({
       username: user.username,
@@ -221,6 +230,73 @@ export const updateUser = async (req: Request, res: Response) => {
     const updatedUser: User = await databaseUser.save();
 
     return res.json(updatedUser);
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "internal server error", error: err });
+  }
+};
+
+const _createUser = async (req: Request, res: Response) => {
+  const { key_cloak_user_id, userGroups, user } = req.headers;
+
+  if (!key_cloak_user_id || !userGroups || !user) {
+    return res.status(400).json({ message: "Missing user credentials" });
+  }
+
+  const userObj = JSON.parse(user as string);
+  const { role: usersRole, line: usersLine } = getUserRoleAndLine(
+    userGroups as string[]
+  );
+
+  const databaseUser = await User.create({
+    username: userObj.username,
+    name: userObj.name,
+    badge_number: userObj.badge_number,
+    key_cloak_id: key_cloak_user_id as string,
+    line: usersLine,
+    role: usersRole,
+  });
+
+  return res.json({ ...databaseUser.toJSON(), groups: userGroups });
+};
+
+const _updateUser = async (req: Request, res: Response, dbUser: User) => {
+  const { key_cloak_user_id, userGroups, user } = req.headers;
+
+  if (!key_cloak_user_id || !userGroups || !user) {
+    return res.status(400).json({ message: "Missing user credentials" });
+  }
+
+  const userObj = JSON.parse(user as string);
+  const { role: usersRole, line: usersLine } = getUserRoleAndLine(
+    userGroups as string[]
+  );
+
+  dbUser.username = userObj.username;
+  dbUser.name = userObj.name;
+  dbUser.badge_number = userObj.badge_number;
+  dbUser.line = usersLine;
+  dbUser.role = usersRole;
+  const updatedUser: User = await dbUser.save();
+
+  return res.json({ ...updatedUser.toJSON(), groups: userGroups });
+};
+
+export const createOrUpdate = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { key_cloak_user_id } = req.headers;
+
+    const user: User | null = await User.findOne({
+      where: {
+        key_cloak_id: key_cloak_user_id,
+      },
+    });
+
+    return user ? _updateUser(req, res, user) : _createUser(req, res);
   } catch (err) {
     return res
       .status(500)

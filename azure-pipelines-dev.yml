@@ -1,0 +1,67 @@
+trigger:
+  branches:
+    include:
+      - develop
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - group: "backend-dev"
+
+stages:
+  - stage: InstallAndBuild
+    jobs:
+      - job: YarnBuild
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "18.x"
+            displayName: "Install Node.js"
+
+          - script: |
+              corepack enable
+              yarn install --frozen-lockfile
+            displayName: "Install dependencies"
+
+          - script: |
+              yarn build
+            displayName: "Build project"
+
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: "."
+              includeRootFolder: false
+              archiveType: "zip"
+              archiveFile: "$(Build.ArtifactStagingDirectory)/lambda.zip"
+              replaceExistingArchive: true
+            displayName: "Create deployment package"
+
+          - publish: "$(Build.ArtifactStagingDirectory)/lambda.zip"
+            artifact: lambda-package
+
+  - stage: Deploy
+    dependsOn: InstallAndBuild
+    condition: succeeded()
+    jobs:
+      - deployment: DeployDev
+        displayName: "Deploy to Dev Lambda"
+        condition: or(eq(variables['Build.SourceBranchName'], 'develop'), eq(variables['Build.SourceBranchName'], 'master'))
+        environment: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: lambda-package
+
+                - task: AWSShellScript@1
+                  inputs:
+                    awsCredentials: mbta-dev
+                    regionName: "us-east-2"
+                    scriptType: "inline"
+                    inlineScript: |
+                      aws lambda update-function-code \
+                        --function-name mbta-backend-dev-app \
+                        --zip-file fileb://$(Pipeline.Workspace)/lambda-package/lambda.zip
+                  displayName: "Deploy to AWS Lambda (Dev)"

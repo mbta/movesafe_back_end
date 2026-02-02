@@ -1,23 +1,23 @@
-import * as lineController from './LineController';
-import * as yardController from './YardController';
-import * as carController from './CarController';
-import * as inspectionFormController from './InspectionFormController';
-import * as moveReasonController from './MoveReasonController';
-import * as moveController from './MoveController';
-import * as signatureController from './SignatureController';
-import * as inspectionController from './InspectionController';
-import * as userController from './UserController';
-import * as tagController from './TagController';
+import * as carController from "./CarController.js";
+import * as inspectionController from "./InspectionController.js";
+import * as inspectionFormController from "./InspectionFormController.js";
+import * as lineController from "./LineController.js";
+import * as moveController from "./MoveController.js";
+import * as moveReasonController from "./MoveReasonController.js";
+import * as signatureController from "./SignatureController.js";
+import * as tagController from "./TagController.js";
+import * as userController from "./UserController.js";
+import * as yardController from "./YardController.js";
 
 export {
-    lineController,
-    yardController,
-    carController,
-    inspectionFormController,
-    moveReasonController,
-    moveController,
-    signatureController,
-    inspectionController,
-    userController,
-    tagController
-}
+  carController,
+  inspectionController,
+  inspectionFormController,
+  lineController,
+  moveController,
+  moveReasonController,
+  signatureController,
+  tagController,
+  userController,
+  yardController,
+};

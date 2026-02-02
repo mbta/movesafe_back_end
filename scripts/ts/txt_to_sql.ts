@@ -1,20 +1,24 @@
-var fs = require("fs"); // eslint-disable-line
+var fs = require("fs");
 
 try {
-  fs.readFile("scripts/txt/green_line_cars.txt", "utf-8", (err, data) => {
-    let script: string =
-      "INSERT INTO mbtadb.Cars (line_id, series_number, is_active) VALUES";
+  fs.readFile(
+    "scripts/txt/green_line_cars.txt",
+    "utf-8",
+    (_: any, data: string) => {
+      let script: string =
+        "INSERT INTO mbtadb.Cars (line_id, series_number, is_active) VALUES";
 
-    const lines: string[] = data.split(/\r?\n/);
+      const lines: string[] = data.split(/\r?\n/);
 
-    lines.forEach((line) => {
-      script += `("62ef8490-19dd-11ef-968b-0a7699ec4bfd", "${line}", 1), `;
-    });
+      lines.forEach((line) => {
+        script += `("62ef8490-19dd-11ef-968b-0a7699ec4bfd", "${line}", 1), `;
+      });
 
-    script = script.slice(0, -2) + ";";
+      script = script.slice(0, -2) + ";";
 
-    console.log(script);
-  });
+      console.log(script);
+    }
+  );
 } catch (e) {
   console.log(e);
 }

@@ -1,36 +1,49 @@
-import { Model, Column, CreatedAt, PrimaryKey, Table, UpdatedAt, ForeignKey, BelongsTo, Default, DataType } from "sequelize-typescript";
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  DataType,
+  Default,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from "sequelize-typescript";
 
-import Line from "./Line";
+import LineModel from "./Line.js";
+
+import type Line from "./Line.js";
 
 @Table({
-    timestamps: true,
-    tableName: "Yards",
-    modelName: "Yard",
+  timestamps: true,
+  tableName: "Yards",
+  modelName: "Yard",
 })
 class Yard extends Model {
-    @PrimaryKey
-    @Default(DataType.UUIDV4)
-    @Column(DataType.UUID)
-    declare id: string;
+  @PrimaryKey
+  @Default(DataType.UUIDV4)
+  @Column(DataType.UUID)
+  declare id: string;
 
-    @ForeignKey(() => Line)
-    @Column
-    declare line_id: string;
+  @ForeignKey(() => LineModel)
+  @Column(DataType.UUID)
+  declare line_id: string;
 
-    @Column
-    declare name: string;
+  @Column(DataType.STRING)
+  declare name: string;
 
-    @Column
-    declare is_main_yard: boolean;
+  @Column(DataType.BOOLEAN)
+  declare is_main_yard: boolean;
 
-    @CreatedAt
-    declare created_at: Date;
+  @CreatedAt
+  declare created_at: Date;
 
-    @UpdatedAt
-    declare last_update: Date;
+  @UpdatedAt
+  declare last_update: Date;
 
-    @BelongsTo(() => Line)
-    declare line: Line;
+  @BelongsTo(() => LineModel)
+  declare line: Line;
 }
 
 export default Yard;

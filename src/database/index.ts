@@ -5,7 +5,7 @@ import {
 import { Config, Dialect } from "sequelize";
 import { Sequelize } from "sequelize-typescript";
 import { DeepWriteable } from "sequelize/types/utils";
-import * as models from "../models";
+import * as models from "../models/index.js";
 
 interface ISecret {
   username: string;

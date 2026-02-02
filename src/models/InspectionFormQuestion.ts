@@ -1,51 +1,67 @@
-import { Model, Column, CreatedAt, PrimaryKey, Table, UpdatedAt, ForeignKey, BelongsTo, Default, DataType, HasMany } from "sequelize-typescript";
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  DataType,
+  Default,
+  ForeignKey,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from "sequelize-typescript";
 
-import InspectionFormSection from "./InspectionFormSection";
-import InspectionAnswer from "./InspectionAnswer";
-import InspectionFormCategory from "./InspectionFormCategory";
+import InspectionAnswerModel from "./InspectionAnswer.js";
+import InspectionFormCategoryModel from "./InspectionFormCategory.js";
+import InspectionFormSectionModel from "./InspectionFormSection.js";
+
+import type InspectionAnswer from "./InspectionAnswer.js";
+import type InspectionFormCategory from "./InspectionFormCategory.js";
+import type InspectionFormSection from "./InspectionFormSection.js";
 
 @Table({
-    timestamps: true,
-    tableName: "Inspection_Form_Questions",
-    modelName: "InspectionFormQuestion",
+  timestamps: true,
+  tableName: "Inspection_Form_Questions",
+  modelName: "InspectionFormQuestion",
 })
 class InspectionFormQuestion extends Model {
-    @PrimaryKey
-    @Default(DataType.UUIDV4)
-    @Column(DataType.UUID)
-    declare id: string;
+  @PrimaryKey
+  @Default(DataType.UUIDV4)
+  @Column(DataType.UUID)
+  declare id: string;
 
-    @ForeignKey(() => InspectionFormSection)
-    @Column
-    declare inspection_form_section_id: string;
+  @ForeignKey(() => InspectionFormSectionModel)
+  @Column(DataType.UUID)
+  declare inspection_form_section_id: string;
 
-    @ForeignKey(() => InspectionFormCategory)
-    @Column
-    declare inspection_form_category_id: string;
+  @ForeignKey(() => InspectionFormCategoryModel)
+  @Column(DataType.UUID)
+  declare inspection_form_category_id: string;
 
-    @Column
-    declare description: string;
+  @Column(DataType.STRING)
+  declare description: string;
 
-    @Column
-    declare question_type: number;
+  @Column(DataType.INTEGER)
+  declare question_type: number;
 
-    @Column
-    declare has_comments: boolean;
+  @Column(DataType.BOOLEAN)
+  declare has_comments: boolean;
 
-    @CreatedAt
-    declare created_at: Date;
+  @CreatedAt
+  declare created_at: Date;
 
-    @UpdatedAt
-    declare last_update: Date;
+  @UpdatedAt
+  declare last_update: Date;
 
-    @BelongsTo(() => InspectionFormSection)
-    declare inspection_form_section: InspectionFormSection;
+  @BelongsTo(() => InspectionFormSectionModel)
+  declare inspection_form_section: InspectionFormSection;
 
-    @BelongsTo(() => InspectionFormCategory)
-    declare inspection_form_category: InspectionFormCategory;
+  @BelongsTo(() => InspectionFormCategoryModel)
+  declare inspection_form_category: InspectionFormCategory;
 
-    @HasMany(() => InspectionAnswer)
-    declare inspection_answers: InspectionAnswer[];
+  @HasMany(() => InspectionAnswerModel)
+  declare inspection_answers: InspectionAnswer[];
 }
 
 export default InspectionFormQuestion;

@@ -1,58 +1,73 @@
-import { Model, Column, CreatedAt, PrimaryKey, Table, UpdatedAt, ForeignKey, BelongsTo, Default, DataType } from "sequelize-typescript";
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  DataType,
+  Default,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from "sequelize-typescript";
 
-import Inspection from "./Inspection";
-import InspectionFormQuestion from "./InspectionFormQuestion";
-import Car from "./Car";
+import CarModel from "./Car.js";
+import InspectionModel from "./Inspection.js";
+import InspectionFormQuestionModel from "./InspectionFormQuestion.js";
+
+import type Car from "./Car.js";
+import type Inspection from "./Inspection.js";
+import type InspectionFormQuestion from "./InspectionFormQuestion.js";
 
 @Table({
-    timestamps: true,
-    tableName: "Inspection_Answers",
-    modelName: "InspectionAnswer",
+  timestamps: true,
+  tableName: "Inspection_Answers",
+  modelName: "InspectionAnswer",
 })
 class InspectionAnswer extends Model {
-    @PrimaryKey
-    @Default(DataType.UUIDV4)
-    @Column(DataType.UUID)
-    declare id: string;
+  @PrimaryKey
+  @Default(DataType.UUIDV4)
+  @Column(DataType.UUID)
+  declare id: string;
 
-    @ForeignKey(() => Inspection)
-    @Column
-    declare inspection_id: string;
+  @ForeignKey(() => InspectionModel)
+  @Column(DataType.UUID)
+  declare inspection_id: string;
 
-    @ForeignKey(() => InspectionFormQuestion)
-    @Column
-    declare inspection_form_question_id: string;
+  @ForeignKey(() => InspectionFormQuestionModel)
+  @Column(DataType.UUID)
+  declare inspection_form_question_id: string;
 
-    @ForeignKey(() => Car)
-    @Column
-    declare car_id?: string;
+  @ForeignKey(() => CarModel)
+  @Column(DataType.UUID)
+  declare car_id?: string;
 
-    @Column
-    declare has_minor_defect: boolean;
+  @Column(DataType.BOOLEAN)
+  declare has_minor_defect: boolean;
 
-    @Column
-    declare has_major_defect: boolean;
+  @Column(DataType.BOOLEAN)
+  declare has_major_defect: boolean;
 
-    @Column
-    declare is_guardside: boolean;
+  @Column(DataType.BOOLEAN)
+  declare is_guardside: boolean;
 
-    @Column
-    declare comments?: string;
+  @Column(DataType.STRING)
+  declare comments?: string;
 
-    @CreatedAt
-    declare created_at: Date;
+  @CreatedAt
+  declare created_at: Date;
 
-    @UpdatedAt
-    declare last_update: Date;
+  @UpdatedAt
+  declare last_update: Date;
 
-    @BelongsTo(() => Inspection)
-    declare inspection: Inspection;
+  @BelongsTo(() => InspectionModel)
+  declare inspection: Inspection;
 
-    @BelongsTo(() => InspectionFormQuestion)
-    declare inspection_form_question: InspectionFormQuestion;
+  @BelongsTo(() => InspectionFormQuestionModel)
+  declare inspection_form_question: InspectionFormQuestion;
 
-    @BelongsTo(() => Car)
-    declare car: Car;
+  @BelongsTo(() => CarModel)
+  declare car: Car;
 }
 
 export default InspectionAnswer;

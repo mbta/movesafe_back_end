@@ -1,87 +1,69 @@
-import {
-  GetSecretValueCommand,
-  SecretsManagerClient,
-} from "@aws-sdk/client-secrets-manager";
 import { NextFunction, Request, Response } from "express";
-import * as jwt from "jsonwebtoken";
+import jwt, { type JwtPayload } from "jsonwebtoken";
+import {
+  authErrorResponse,
+  ForbiddenError,
+  UnauthorizedError,
+} from "./authErrors.js";
+import { isEntraIdIssuer, verifyEntraIdToken } from "./entra/entraAuth.js";
+import { verifyKeycloakToken } from "./keycloak/keycloakAuth.js";
 
-interface ISecret {
-  KEY_CLOAK_PUBLIC_SECRET: string;
-}
+const getBearerToken = (req: Request): string => {
+  const authToken = req.headers["authorization"]?.split(" ")[1] || null;
 
-interface KeycloakToken extends jwt.JwtPayload {
-  groups: string[];
-}
+  if (!authToken) {
+    throw new UnauthorizedError(
+      "Authentication is required to access this resource."
+    );
+  }
 
-const secretRegion: string = process.env.AWS_REGION as string;
-const secretName: string = process.env.SECRET_NAME as string;
-const secretVersion: string = process.env.SECRET_VERSION_STAGE as string;
+  return authToken;
+};
+
+const getUserFromToken = async (
+  token: string
+): Promise<{
+  userId: string;
+  userGroups: string[];
+  user?: {
+    name: string;
+    username: string;
+    badgeNumber: string;
+  };
+}> => {
+  const decodedUnverified = jwt.decode(token) as JwtPayload;
+
+  return isEntraIdIssuer(decodedUnverified.iss)
+    ? await verifyEntraIdToken(token)
+    : await verifyKeycloakToken(token);
+};
+
+const isUserAllowed = (
+  userGroups: string[],
+  allowedRoles: string[]
+): boolean => {
+  return !!userGroups.find((g) => allowedRoles.includes(g));
+};
 
 export const authorize = (allowedRoles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authToken: string | undefined =
-        req.headers["authorization"]?.split(" ")[1];
+      const authToken = getBearerToken(req);
+      const { userId, userGroups, user } = await getUserFromToken(authToken);
 
-      if (!authToken)
-        return res.status(401).json({
-          error: "Unauthorized",
-          message: "Authentication is required to access this resource.",
-        });
-
-      const client = new SecretsManagerClient({
-        region: secretRegion,
-      });
-
-      const response = await client.send(
-        new GetSecretValueCommand({
-          SecretId: secretName,
-          VersionStage: secretVersion,
-        })
-      );
-
-      if (!response.SecretString) throw new Error("Error retrieving secrets");
-
-      const secret: ISecret = JSON.parse(response.SecretString);
-
-      const keyCloakKey: string = `-----BEGIN PUBLIC KEY-----\n${secret.KEY_CLOAK_PUBLIC_SECRET}\n-----END PUBLIC KEY-----`;
-
-      const decodedToken = jwt.verify(authToken, keyCloakKey, {
-        algorithms: ["RS256"],
-      }) as KeycloakToken;
-
-      if (!decodedToken.sub) {
-        return res.status(401).json({
-          error: "Unauthorized",
-          message: "Invalid token: missing subject",
-        });
+      if (!isUserAllowed(userGroups, allowedRoles)) {
+        throw new ForbiddenError(
+          "You do not have permission to access this resource."
+        );
       }
 
-      const userGroups: string[] = decodedToken.groups;
-
-      const isUserAllowed: boolean = !!userGroups.find((g) =>
-        allowedRoles.includes(g)
-      );
-
-      if (!isUserAllowed) {
-        return res.status(403).json({
-          error: "Forbidden",
-          message:
-            "You do not have the required permissions to access this resource.",
-        });
-      }
-
-      req.headers.key_cloak_user_id = decodedToken.sub;
+      req.headers.key_cloak_user_id = userId;
       req.headers.userGroups = userGroups;
+      req.headers.user = user ? JSON.stringify(user) : undefined;
+
       next();
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "An unexpected error occurred";
-
-      return res.status(500).json({
-        error: "Internal Server Error",
-        message: errorMessage,
-      });
+      return authErrorResponse(res, error);
     }
   };
 };

@@ -1,48 +1,62 @@
-import { Model, Column, CreatedAt, PrimaryKey, Table, UpdatedAt, ForeignKey, BelongsTo, Default, DataType } from "sequelize-typescript";
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  DataType,
+  Default,
+  ForeignKey,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from "sequelize-typescript";
 
-import Move from "./Move";
-import Car from "./Car";
+import CarModel from "./Car.js";
+import MoveModel from "./Move.js";
+
+import type Car from "./Car.js";
+import type Move from "./Move.js";
 
 @Table({
-    timestamps: true,
-    tableName: "Move_Cars",
-    modelName: "MoveCar",
+  timestamps: true,
+  tableName: "Move_Cars",
+  modelName: "MoveCar",
 })
 class MoveCar extends Model {
-    @PrimaryKey
-    @Default(DataType.UUIDV4)
-    @Column(DataType.UUID)
-    declare id: string;
+  @PrimaryKey
+  @Default(DataType.UUIDV4)
+  @Column(DataType.UUID)
+  declare id: string;
 
-    @ForeignKey(() => Move)
-    @Column
-    declare move_id: string;
+  @ForeignKey(() => MoveModel)
+  @Column(DataType.UUID)
+  declare move_id: string;
 
-    @ForeignKey(() => Car)
-    @Column
-    declare first_car_id: string;
+  @ForeignKey(() => CarModel)
+  @Column(DataType.UUID)
+  declare first_car_id: string;
 
-    @ForeignKey(() => Car)
-    @Column
-    declare second_car_id: string;
+  @ForeignKey(() => CarModel)
+  @Column(DataType.UUID)
+  declare second_car_id: string;
 
-    @Column
-    declare pair_order: number;
+  @Column(DataType.INTEGER)
+  declare pair_order: number;
 
-    @CreatedAt
-    declare created_at: Date;
+  @CreatedAt
+  declare created_at: Date;
 
-    @UpdatedAt
-    declare last_update: Date;
+  @UpdatedAt
+  declare last_update: Date;
 
-    @BelongsTo(() => Move)
-    declare move: Move;
+  @BelongsTo(() => MoveModel)
+  declare move: Move;
 
-    @BelongsTo(() => Car, { foreignKey: 'first_car_id', as: 'first_car' })
-    declare first_car: Car;
+  @BelongsTo(() => CarModel, { foreignKey: "first_car_id", as: "first_car" })
+  declare first_car: Car;
 
-    @BelongsTo(() => Car, { foreignKey: 'second_car_id', as: 'second_car' })
-    declare second_car: Car;
+  @BelongsTo(() => CarModel, { foreignKey: "second_car_id", as: "second_car" })
+  declare second_car: Car;
 }
 
 export default MoveCar;
