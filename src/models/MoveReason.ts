@@ -1,37 +1,54 @@
-import { Model, Column, CreatedAt, PrimaryKey, Table, UpdatedAt, BelongsToMany, Default, DataType, HasMany } from "sequelize-typescript";
+import {
+  BelongsToMany,
+  Column,
+  CreatedAt,
+  DataType,
+  Default,
+  HasMany,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from "sequelize-typescript";
 
-import MoveReasonInspectionFormAssociation from "./MoveReasonInspectionFormAssociation";
-import InspectionForm from "./InspectionForm";
-import Tag from "./Tag";
+import InspectionFormModel from "./InspectionForm.js";
+import MoveReasonInspectionFormAssociationModel from "./MoveReasonInspectionFormAssociation.js";
+import TagModel from "./Tag.js";
+
+import type InspectionForm from "./InspectionForm.js";
+import type Tag from "./Tag.js";
 
 @Table({
-    timestamps: true,
-    tableName: "Move_Reasons",
-    modelName: "MoveReason",
+  timestamps: true,
+  tableName: "Move_Reasons",
+  modelName: "MoveReason",
 })
 class MoveReason extends Model {
-    @PrimaryKey
-    @Default(DataType.UUIDV4)
-    @Column(DataType.UUID)
-    declare id: string;
+  @PrimaryKey
+  @Default(DataType.UUIDV4)
+  @Column(DataType.UUID)
+  declare id: string;
 
-    @Column
-    declare name: string;
+  @Column(DataType.STRING)
+  declare name: string;
 
-    @Column
-    declare is_available_satellite_yards: boolean;
+  @Column(DataType.BOOLEAN)
+  declare is_available_satellite_yards: boolean;
 
-    @CreatedAt
-    declare created_at: Date;
+  @CreatedAt
+  declare created_at: Date;
 
-    @UpdatedAt
-    declare last_update: Date;
+  @UpdatedAt
+  declare last_update: Date;
 
-    @HasMany(() => Tag)
-    declare tags: Tag[];
+  @HasMany(() => TagModel)
+  declare tags: Tag[];
 
-    @BelongsToMany(() => InspectionForm, () => MoveReasonInspectionFormAssociation)
-    declare inspection_forms: InspectionForm[];
+  @BelongsToMany(
+    () => InspectionFormModel,
+    () => MoveReasonInspectionFormAssociationModel
+  )
+  declare inspection_forms: InspectionForm[];
 }
 
 export default MoveReason;

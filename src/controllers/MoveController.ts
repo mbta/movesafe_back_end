@@ -6,24 +6,24 @@ import {
   Transaction,
   WhereOptions,
 } from "sequelize";
-import sequelizeConnection from "../database";
+import sequelizeConnection from "../database/index.js";
 import {
   IMoveDetailsDTO,
   IMoveDetailsInspection,
   IMoveDetailsInspectionAnswer,
   IMoveDetailsInspectionFormQuestion,
   IMoveDetailsInspectionFormSection,
-} from "../dto/moveDetailsDTO.model";
-import { AuditLogActions } from "../enum/audit_log_actions.enum";
-import { MoveStatus } from "../enum/move-status.enum";
-import { MoveReasons } from "../enum/moveReasons";
-import { QuestionTypes } from "../enum/questionTypes.enum";
-import { RailOptions } from "../enum/railOptions.enum";
+} from "../dto/moveDetailsDTO.model.js";
+import { AuditLogActions } from "../enum/audit_log_actions.enum.js";
+import { MoveStatus } from "../enum/move-status.enum.js";
+import { MoveReasons } from "../enum/moveReasons.js";
+import { QuestionTypes } from "../enum/questionTypes.enum.js";
+import { RailOptions } from "../enum/railOptions.enum.js";
 import {
   UserRoles,
   YardMasterRoles,
   YardMotorPersonRoles,
-} from "../enum/userRoles.enum";
+} from "../enum/userRoles.enum.js";
 import {
   AuditLog,
   Car,
@@ -41,8 +41,8 @@ import {
   Tag,
   User,
   Yard,
-} from "../models";
-import { getDayUTCRange } from "../utils/dateUtils";
+} from "../models/index.js";
+import { getDayUTCRange } from "../utils/dateUtils.js";
 
 interface MoveCarInput {
   first_car_id: string;

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { Op } from "sequelize";
-import { MoveStatus } from "../enum/move-status.enum";
-import { Inspection, InspectionForm, Move } from "../models";
-import { getDayUTCRange } from "../utils/dateUtils";
+import { MoveStatus } from "../enum/move-status.enum.js";
+import { Inspection, InspectionForm, Move } from "../models/index.js";
+import { getDayUTCRange } from "../utils/dateUtils.js";
 
 export const getStatsForDay = async (req: Request, res: Response) => {
   try {
@@ -14,11 +14,9 @@ export const getStatsForDay = async (req: Request, res: Response) => {
       !date_to ||
       typeof date_to !== "string"
     ) {
-      return res
-        .status(400)
-        .json({
-          message: "All parameters should be provided in the right format",
-        });
+      return res.status(400).json({
+        message: "All parameters should be provided in the right format",
+      });
     }
 
     const { startUTC } = getDayUTCRange(

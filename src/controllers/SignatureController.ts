@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { Transaction } from "sequelize";
-import sequelizeConnection from "../database/index";
-import { AuditLogActions } from "../enum/audit_log_actions.enum";
-import { MoveStatus } from "../enum/move-status.enum";
-import { SignatureTypes } from "../enum/signature-types.enum";
+import sequelizeConnection from "../database/index.js";
+import { AuditLogActions } from "../enum/audit_log_actions.enum.js";
+import { MoveStatus } from "../enum/move-status.enum.js";
+import { SignatureTypes } from "../enum/signature-types.enum.js";
 import {
   AuditLog,
   Inspection,
@@ -11,8 +11,8 @@ import {
   Move,
   Signature,
   User,
-} from "../models/index";
-import * as s3Client from "../utils/s3Client";
+} from "../models/index.js";
+import * as s3Client from "../utils/s3Client.js";
 
 export const saveSignature = async (req: Request, res: Response) => {
   const transaction: Transaction = await sequelizeConnection.transaction();
@@ -76,12 +76,10 @@ export const saveSignature = async (req: Request, res: Response) => {
     ) {
       await transaction.rollback();
       //returned message being used in frontend - should update frontend if message changed
-      return res
-        .status(400)
-        .json({
-          message:
-            "Can not save yardmaster signature before move done or inspection failed",
-        });
+      return res.status(400).json({
+        message:
+          "Can not save yardmaster signature before move done or inspection failed",
+      });
     }
 
     const signature: Signature | null = await Signature.findOne({

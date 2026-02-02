@@ -1,39 +1,39 @@
-import AuditLog from "./AuditLog";
-import Car from "./Car";
-import Inspection from "./Inspection";
-import InspectionAnswer from "./InspectionAnswer";
-import InspectionForm from "./InspectionForm";
-import InspectionFormQuestion from "./InspectionFormQuestion";
-import InspectionFormSection from "./InspectionFormSection";
-import Line from "./Line";
-import Move from "./Move";
-import MoveCar from "./MoveCar";
-import MoveReason from "./MoveReason";
-import MoveReasonInspectionFormAssociation from "./MoveReasonInspectionFormAssociation";
-import Signature from "./Signature";
-import Tag from "./Tag";
-import User from "./User";
-import Yard from "./Yard";
-import MoveTagAssociation from "./MoveTagAssociation";
-import InspectionFormCategory from "./InspectionFormCategory";
+import AuditLog from "./AuditLog.js";
+import Car from "./Car.js";
+import Inspection from "./Inspection.js";
+import InspectionAnswer from "./InspectionAnswer.js";
+import InspectionForm from "./InspectionForm.js";
+import InspectionFormCategory from "./InspectionFormCategory.js";
+import InspectionFormQuestion from "./InspectionFormQuestion.js";
+import InspectionFormSection from "./InspectionFormSection.js";
+import Line from "./Line.js";
+import Move from "./Move.js";
+import MoveCar from "./MoveCar.js";
+import MoveReason from "./MoveReason.js";
+import MoveReasonInspectionFormAssociation from "./MoveReasonInspectionFormAssociation.js";
+import MoveTagAssociation from "./MoveTagAssociation.js";
+import Signature from "./Signature.js";
+import Tag from "./Tag.js";
+import User from "./User.js";
+import Yard from "./Yard.js";
 
 export {
-    AuditLog,
-    Car,
-    Inspection,
-    InspectionAnswer,
-    InspectionForm,
-    InspectionFormQuestion,
-    InspectionFormSection,
-    Line,
-    Move,
-    MoveCar,
-    MoveReason,
-    MoveReasonInspectionFormAssociation,
-    Signature,
-    User,
-    Yard,
-    Tag,
-    MoveTagAssociation,
-    InspectionFormCategory
-}
+  AuditLog,
+  Car,
+  Inspection,
+  InspectionAnswer,
+  InspectionForm,
+  InspectionFormCategory,
+  InspectionFormQuestion,
+  InspectionFormSection,
+  Line,
+  Move,
+  MoveCar,
+  MoveReason,
+  MoveReasonInspectionFormAssociation,
+  MoveTagAssociation,
+  Signature,
+  Tag,
+  User,
+  Yard,
+};

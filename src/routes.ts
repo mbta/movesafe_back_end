@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { authorize } from "./auth/authorizationMiddleware";
+import { authorize } from "./auth/authorizationMiddleware.js";
 import {
   carController,
   inspectionController,
@@ -11,14 +11,15 @@ import {
   tagController,
   userController,
   yardController,
-} from "./controllers";
+} from "./controllers/index.js";
 import {
+  AllRoles,
   ManagerRoles,
   YardMasterRoles,
   YardMotorPersonRoles,
-} from "./enum/userRoles.enum";
-// import getEverbridgeContact from "./utils/everbridge";
-import upload from "./utils/multer";
+} from "./enum/userRoles.enum.js";
+import { getEverbridgeContact } from "./utils/everbridge.js";
+import upload from "./utils/multer.js";
 
 const routes: Router = express.Router();
 
@@ -165,12 +166,8 @@ routes.post(
   signatureController.saveSignature
 );
 
-routes.post("/user", userController.create);
+routes.post("/user", authorize(AllRoles), userController.createOrUpdate);
 
-routes.put("/user", userController.updateUser);
-
-routes.delete("/user", userController.deleteUser);
-
-// routes.post("/everbridge-contacts", getEverbridgeContact);
+routes.post("/everbridge-contacts", getEverbridgeContact);
 
 export default routes;
